@@ -11,30 +11,35 @@ def convert_rubric_to_csv_or_excel(input_json_path, output_path, output_format):
     with open(input_json_path, 'r') as file:
         rubric_data = json.load(file)
     
-    rubric_scale_section = rubric_data['RubricScale']
+    rubric_scale_section = rubric_data['Ratings']
     column_headers = ['Criteria']
     for scale in rubric_scale_section:
-        column_headers.append(scale['name'])
+        column_headers.append(scale["Rating"])
+    column_headers.append('Marks')
     
-    rubric_criterion_section = rubric_data['RubricCriterion']
+    rubric_criterion_section = rubric_data['Criteria']
     rows = []
     for criterion in rubric_criterion_section:
+        print(criterion)
         if use_name_and_value.get():
-            row = [f"{criterion['name']} ({criterion['value']})"]
+            row = [f"{criterion['Criteria']} ({criterion['MaxMark']})"]
         else:
-            row = [criterion['description']]
+            row = [criterion['Criteria']]
         #row = [criterion['description']]
         row.extend([''] * (len(column_headers) - 1))
         rows.append(row)
-        
-    rubric_criterion_scale_section = rubric_data['RubricCriterionScale']
-    criterion_id_to_row_index = {criterion['id']: index for index, criterion in enumerate(rubric_criterion_section)}
-    scale_value_id_to_column_index = {scale['id']: index + 1 for index, scale in enumerate(rubric_scale_section)}
-    
+
+    rubric_criterion_scale_section = rubric_data['Criteria']
+    criterion_id_to_row_index = {criterion['CriteriaIndex']: index for index, criterion in enumerate(rubric_criterion_section)}
+    scale_value_id_to_column_index = {scale["RatingIndex"]: index + 1 for index, scale in enumerate(rubric_scale_section)}
+
     for entry in rubric_criterion_scale_section:
-        row_index = criterion_id_to_row_index[entry['criterion']]
-        column_index = scale_value_id_to_column_index[entry['scale_value']]
-        rows[row_index][column_index] = entry['description']
+        row_index = criterion_id_to_row_index[entry['CriteriaIndex']]
+        for category in entry['Descriptors']:
+            if len(category) != 0:
+                column_index = scale_value_id_to_column_index[category['RatingIndex']]
+                rows[row_index][column_index] = category['Text']
+        rows[row_index][max(scale_value_id_to_column_index.values()) + 1] = entry["MaxMark"]
     
     if output_format == 'CSV':
         with open(output_path, mode='w', newline='') as file:
