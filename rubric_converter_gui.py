@@ -20,12 +20,10 @@ def convert_rubric_to_csv_or_excel(input_json_path, output_path, output_format):
     rubric_criterion_section = rubric_data['Criteria']
     rows = []
     for criterion in rubric_criterion_section:
-        print(criterion)
         if use_name_and_value.get():
             row = [f"{criterion['Criteria']} ({criterion['MaxMark']})"]
         else:
             row = [criterion['Criteria']]
-        #row = [criterion['description']]
         row.extend([''] * (len(column_headers) - 1))
         rows.append(row)
 
